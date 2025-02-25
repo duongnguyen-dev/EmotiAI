@@ -1,2 +1,2 @@
-# vibebot
-A suggested emotion bot on discord
+# EmotiAI
+Emotion classification based on conversational data
