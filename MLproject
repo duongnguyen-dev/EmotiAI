@@ -1,0 +1,10 @@
+name: EmotiAI
+
+docker_env: 
+  image: emoti-mlflow
+  volumes: ["./mlflow-data:/mlflow/mlruns"]
+
+entry_points: 
+  train: 
+    parameters: # Fill in here
+    commands: "python train.py"

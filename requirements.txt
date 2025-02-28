@@ -1,0 +1,10 @@
+nltk==3.9.1
+loguru==0.7.3
+mlflow==2.20.3
+minio==7.2.13
+apache-airflow==2.7.1
+apache-airflow-providers-postgres==5.6.1
+airflow-provider-great-expectations==0.2.6
+tensorflow==2.18.0
+python-dotenv==1.0.1
+psycopg2-binary==2.9.10

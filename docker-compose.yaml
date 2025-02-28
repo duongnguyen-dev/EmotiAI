@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  source:
+    image: postgres:13
+    command: ['postgres', '-c', 'wal_level=logical']
+    container_name: source
+    healthcheck:
+      test: ['CMD', 'psql', '-U', 'tenant', '-c', 'SELECT 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_DB=goemotion
+      - POSTGRES_USER=emotiai
+      - POSTGRES_PASSWORD=emotiai
+    volumes:
+      - source_data:/var/lib/postgresql/data
+  minio: 
+    image: minio/minio:RELEASE.2025-01-20T14-49-07Z-cpuv1
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_storage:/data
+    environment:
+      MINIO_ACCESS_KEY: minio_access_key
+      MINIO_SECRET_KEY: minio_secret_key
+    command: server --console-address ":9001" /data
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: > 
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minio_access_key minio_secret_key;
+      /usr/bin/mc mb myminio/emotiai;
+      /usr/bin/mc policy set public myminio/emotiai;
+      exit 0;
+      "
+  
+volumes:
+  source_data:
+  minio_storage:

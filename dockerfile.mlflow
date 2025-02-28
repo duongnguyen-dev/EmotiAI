@@ -1,0 +1,10 @@
+FROM ghcr.io/mlflow/mlflow:v2.20.3 
+
+COPY ./requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY ./src .
+COPY ./data .
+COPY ./configs .
+COPY ./models .
