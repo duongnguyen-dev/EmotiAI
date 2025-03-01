@@ -18,6 +18,8 @@ case "$COMMAND" in
         conda activate emotiai
         python data/create_table.py
         python data/insert_into_table.py
+        python data/create_label_table.py
+        python data/insert_label_data.py
 
         docker compose -f docker-compose.airflow.yaml build
         docker compose -f docker-compose.airflow.yaml up -d --no-build
@@ -28,13 +30,6 @@ case "$COMMAND" in
         ;;
     up-without-build)
         docker compose -f docker-compose.yaml up -d
-
-        # Initialize Conda for the current shell session
-        eval "$(conda shell.bash hook)"
-        conda activate emotiai
-        python data/create_table.py
-        python data/insert_into_table.py
-
         docker compose -f docker-compose.airflow.yaml up -d --no-build
         ;;
     *)

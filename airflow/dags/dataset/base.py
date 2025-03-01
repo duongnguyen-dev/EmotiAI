@@ -6,18 +6,6 @@ class BaseDataset(ABC):
         pass
 
     @abstractmethod
-    def _load_labels_dict():
-        pass
-
-    @abstractmethod
-    def _load_raw_dataset():
-        pass
-
-    @abstractmethod
-    def get_raw_dataset():
-        pass
-
-    @abstractmethod
     def get_preprocessed_data():
         pass
 

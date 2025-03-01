@@ -6,12 +6,12 @@ nltk.download('stopwords')
 
 from loguru import logger
 from nltk.corpus import stopwords
-from src.dataset.base import BaseDataset
-from src.dataset.config import DatasetConfig
+from dataset.base import BaseDataset
+from dataset.config import DatasetConfig
 from sklearn.preprocessing import MultiLabelBinarizer
 
 class GoEmotionDataset(BaseDataset):
-    def __init__(self, dataset_path: str):
+    def __init__(self, raw_data: dict):
         super().__init__()
 
         # Init variables
@@ -24,18 +24,9 @@ class GoEmotionDataset(BaseDataset):
             output_sequence_length=int(DatasetConfig.SEQUENCE_LENGTH),
             standardize=None
         )
-
-        self._dataset_path = dataset_path
-
         self._dataset_types = ["train", "test", "dev"]
-
-        self._label_dict = {}
-
-        self._raw_data = {key : None for key in self._dataset_types}
-
+        self._raw_data = raw_data
         # Fully prepared dataset pipeline
-        self._load_labels_dict()
-        self._load_raw_dataset()
         self._ds, self._vocabulary = self._preprocessing()
         
     def _preprocessing(self):
@@ -53,10 +44,9 @@ class GoEmotionDataset(BaseDataset):
         
         # 1, Process features
         ds = {x : {} for x in self._dataset_types}
-        
         for key, samples in self._raw_data.items():
-            X = [sample["text"] for sample in samples]
-            y = [sample["label"] for sample in samples]
+            X = [text for text in samples["text"] ]
+            y = [label for label in samples["label"]]
             
             stopped_x = []
 
@@ -85,49 +75,6 @@ class GoEmotionDataset(BaseDataset):
                 ds[key]["labels"] = self.mlb.transform(y)
         
         return ds, vocabulary
-
-    def _load_labels_dict(self):
-        try:
-            with open(self._dataset_path + "/labels.txt", 'r') as file:
-                lines = file.readlines()
-                for i, line in enumerate(lines):
-                    self._label_dict[i] = line.replace("\n", "")
-                logger.info(f"Loading labels successfully. There are {len(self._label_dict)} in total.")
-        except FileNotFoundError as e:
-            logger.error(e)
-
-    def _load_raw_dataset(self):
-        try:
-            for ds in self._dataset_types:
-                df = []
-                with open(self._dataset_path + f"/{ds}.tsv", "r", encoding="utf-8") as f:
-                    lines = f.readlines()
-                    for (i, line) in enumerate(lines):
-                        line = line.strip()
-                        items = line.split("\t")
-                        text_a = items[0]
-                        label = list(map(int, items[1].split(",")))
-                        df.append({
-                            "text": text_a, 
-                            "label": label
-                        })
-                logger.info(f"Load {ds} dataset successfully")
-                self._raw_data[ds] = df
-
-        except FileNotFoundError as e:
-            logger.error(e)
-    
-    def get_raw_dataset(self, type: str):
-        '''
-        This method is used to get raw dataset.
-        Args:
-            type: Only accept "train", "test" or "dev".
-        '''
-
-        if type not in self._dataset_types:
-            logger.error(f'Unable to get raw dataset of type {type}. Only accept "train", "test" or "dev"')
-
-        return self._raw_data[type]
 
     def get_preprocessed_data(self, type):
         '''
