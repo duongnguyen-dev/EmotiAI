@@ -66,6 +66,7 @@ with DAG(
 
     def load(**kwargs):
         ti = kwargs["ti"]
+
         client = minio.Minio(
             endpoint="172.18.0.1:9000",
             access_key="minio_access_key",
@@ -81,7 +82,8 @@ with DAG(
             )
 
         # Remove temporary dir
-        
+        temp_file_path = ti.xcom_pull(task_ids="transform", key='temp_data_storage_dir')
+        os.removedirs(temp_file_path)
 
     extract_task = PythonOperator(
         task_id='extract',

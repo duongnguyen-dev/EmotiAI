@@ -11,23 +11,23 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "5437:5432"
+      - "${POSTGRES_PORT}:5432"
     environment:
-      - POSTGRES_DB=goemotion
-      - POSTGRES_USER=emotiai
-      - POSTGRES_PASSWORD=emotiai
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - source_data:/var/lib/postgresql/data
   minio: 
     image: minio/minio:RELEASE.2025-01-20T14-49-07Z-cpuv1
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
     volumes:
       - minio_storage:/data
     environment:
-      MINIO_ACCESS_KEY: minio_access_key
-      MINIO_SECRET_KEY: minio_secret_key
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     command: server --console-address ":9001" /data
 
   createbuckets:
@@ -38,10 +38,40 @@ services:
       /bin/sh -c "
       /usr/bin/mc alias set myminio http://minio:9000 minio_access_key minio_secret_key;
       /usr/bin/mc mb myminio/emotiai;
+      /usr/bin/mc mb myminio/mlflow;
       /usr/bin/mc policy set public myminio/emotiai;
+      /usr/bin/mc policy set public myminio/mlflow;
       exit 0;
       "
   
+  tracking_server:
+    restart: always
+    build: 
+      context: .
+      dockerfile: dockerfile.mlflow
+    image: mlflow_server
+    container_name: mlflow_server
+    depends_on:
+      - source
+    ports:
+      - "${MLFLOW_PORT}:5000"
+    environment:
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_KEY}
+      - MLFLOW_S3_ENDPOINT_URL=http://s3:${MINIO_PORT}
+      - MLFLOW_S3_IGNORE_TLS=true
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@172.18.0.1:${POSTGRES_PORT}/${POSTGRES_DB}
+      --host 0.0.0.0
+      --serve-artifacts
+      --artifacts-destination s3://${MLFLOW_BUCKET_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MLFLOW_PORT}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   source_data:
   minio_storage:

@@ -11,7 +11,8 @@ COMMAND=$1
 # Execute the Docker Compose command
 case "$COMMAND" in
     up)
-        docker compose -f docker-compose.yaml up -d
+        docker compose -f docker-compose.yaml up build
+        docker compose -f docker-compose.yaml up -d --no-build
 
         # Initialize Conda for the current shell session
         eval "$(conda shell.bash hook)"
@@ -29,7 +30,7 @@ case "$COMMAND" in
         docker compose -f docker-compose.yaml down
         ;;
     up-without-build)
-        docker compose -f docker-compose.yaml up -d
+        docker compose -f docker-compose.yaml up -d --no-build
         docker compose -f docker-compose.airflow.yaml up -d --no-build
         ;;
     *)
