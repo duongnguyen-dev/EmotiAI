@@ -51,15 +51,15 @@ class GoEmotionDataset(BaseDataset):
             stopped_x = []
 
             for x in X:
-                lowered_x = x.lower()
-                translated_table = str.maketrans('', '', string.punctuation)
-                stripped_x = lowered_x.translate(translated_table)
+                stripped_x = " ".join(x["text"].split()) # text after being removed extra space 
+                # translated_table = str.maketrans('', '', string.punctuation)
+                # stripped_x = lowered_x.translate(translated_table)
                 tokenized_x = stripped_x.split(" ")
                 filtered_tokenized_x = [self.lemmatizer.lemmatize(token) for token in tokenized_x if token not in self.stopword]
                 stopped_x.append(filtered_tokenized_x)
 
             preprocessed_data = [' '.join(token) for token in stopped_x]
-
+            
             if key == "train":
                 self.vectorizer.adapt(preprocessed_data)
                 vocabulary = self.vectorizer.get_vocabulary()
