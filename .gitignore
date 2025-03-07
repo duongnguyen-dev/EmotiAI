@@ -3,3 +3,4 @@ EmotiAI.egg-info
 __pycache__
 mlruns
 /airflow/logs
+/airflow/dags/output

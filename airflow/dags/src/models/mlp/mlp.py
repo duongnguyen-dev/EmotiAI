@@ -8,6 +8,7 @@ class MLPConfig:
     EMBEDDING_SIZE=128
     NUM_CLASSES=28
     INITIALIZER="uniform"
+    OUTPUT_MODE="int"
 
 class MLP(Model):
     def __init__(self,
@@ -23,8 +24,16 @@ class MLP(Model):
         self.embedding_size = embedding_size
         self.initializer = initializer
         self.num_classes = num_classes
+
+        self.vectorizer = keras.layers.TextVectorization(
+            max_tokens=MLPConfig.MAX_TOKEN,
+            output_mode=MLPConfig.OUTPUT_MODE,
+            output_sequence_length=int(MLPConfig.SEQUENCE_LENGTH),
+            standardize=None
+        )
+        
         self.embedding = keras.layers.Embedding(input_dim=self.max_token, # set input shape
-                                            output_dim=128, # set size of embedding vector
+                                            output_dim=self.embedding_size, # set size of embedding vector
                                             embeddings_initializer=self.initializer, # default, intialize randomly
                                             input_length=self.sequence_length, # how long is each input
                                             name="embedding_1") 
@@ -37,7 +46,8 @@ class MLP(Model):
     def call(self, inputs):
         tf.random.set_seed(42)
 
-        x = self.embedding(inputs)
+        x = self.vectorizer(inputs)
+        x = self.embedding(x)
         x = self.dense_layer_1(x)
         x = self.dense_layer_2(x)
         x = self.global_average_1d(x)

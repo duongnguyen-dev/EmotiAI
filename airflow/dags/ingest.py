@@ -1,24 +1,25 @@
 import os
 import json
 import h5py
-import minio 
 
 from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from sqlalchemy import create_engine, Column, Integer, String, ARRAY
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from dataset.goemotion import GoEmotionDataset
+from airflow.models import Variable
 
 with DAG(
     dag_id="etl_postgres_to_minio",
     start_date=datetime(2025, 2, 28),
 ) as dag:
+
     def extract(**kwargs):
+        from sqlalchemy import create_engine, Column, Integer, String, ARRAY
+        from sqlalchemy.ext.declarative import declarative_base
+        from sqlalchemy.orm import sessionmaker
+
         ti = kwargs["ti"]
 
-        engine = create_engine("postgresql+psycopg2://emotiai:emotiai@172.18.0.1:5437/goemotion")
+        engine = create_engine(Variable.get("postgres_conn"))
         Session = sessionmaker(bind=engine)
         session = Session()
 
@@ -40,37 +41,45 @@ with DAG(
         ti.xcom_push("extracted_data", extracted_data)
 
     def transform(**kwargs):
+        from sklearn.preprocessing import MultiLabelBinarizer
+        from src.dataset.preprocess import preprocess_features, preprocess_labels
+        
         ti = kwargs["ti"]
 
         extracted_data = ti.xcom_pull(task_ids="extract", key="extracted_data")
-        # json_extracted_data = json.loads(extracted_data)
-        ge = GoEmotionDataset(extracted_data)
+
+        preprocessed_data = {x: {} for x in ["train", "test", "dev"]}
+        
+        mlb = MultiLabelBinarizer()
+
+        for key, value in extracted_data.items():
+            preprocessed_data[key]["features"] = preprocess_features(value["text"])
+            preprocessed_data[key]["labels"] = preprocess_labels(mlb, key, value["label"])
 
         current_dag_directory = os.path.dirname(os.path.abspath(__file__))
         output_directory = os.path.join(current_dag_directory, 'output')
-
+        
         os.makedirs(output_directory, exist_ok=True)
 
         for i in ["train", "test", "dev"]:
-            ds = ge.get_preprocessed_data(i)
             output_file_path = os.path.join(output_directory, f"{i}.h5")
 
             with h5py.File(output_file_path, "w") as f:
-                features_group = f.create_group('features')
-                for idx, tensor in enumerate(ds["features"]):
-                    features_group.create_dataset(f'tensor_{idx}', data=tensor)
-                f.create_dataset('labels', data=ds["labels"])
+                f.create_dataset('features', data=preprocessed_data[i]["features"])
+                f.create_dataset('labels', data=preprocessed_data[i]["labels"])
 
             kwargs['ti'].xcom_push(key=f'{i}_h5_file_path', value=output_file_path)
             kwargs['ti'].xcom_push(key="temp_data_storage_dir", value=output_directory)
 
     def load(**kwargs):
+        import minio 
+
         ti = kwargs["ti"]
 
         client = minio.Minio(
-            endpoint="172.18.0.1:9000",
-            access_key="minio_access_key",
-            secret_key="minio_secret_key",
+            endpoint=Variable.get("minio_endpoint"),
+            access_key=Variable.get("minio_access_key"),
+            secret_key=Variable.get("minio_secret_key"),
             secure=False,
         )
         for i in ["train", "test", "dev"]:
@@ -80,10 +89,6 @@ with DAG(
                 object_name=os.path.join("goemotion", f"{i}.h5"),
                 file_path=transformed_data,
             )
-
-        # Remove temporary dir
-        temp_file_path = ti.xcom_pull(task_ids="transform", key='temp_data_storage_dir')
-        os.removedirs(temp_file_path)
 
     extract_task = PythonOperator(
         task_id='extract',
