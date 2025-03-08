@@ -9,7 +9,10 @@ with DAG(
 ) as dag:
     
     def train():
+        import os
+        import h5py
         import keras
+        import minio 
         from utils import load_ds, set_tracking_uri
         from src.models.mlp.mlp import MLP
         from src.models.mlp.config import MLPConfig
@@ -36,7 +39,31 @@ with DAG(
         )
 
         vectorizer.adapt(X_train)
-    
+        
+        vocabulary = vectorizer.get_vocabulary()
+
+        current_dag_directory = os.path.dirname(os.path.abspath(__file__))
+        output_directory = os.path.join(current_dag_directory, 'output')
+        os.makedirs(output_directory, exist_ok=True)
+
+        output_file_path = os.path.join(output_directory, "vocabulary.h5")
+
+        with h5py.File(output_file_path, "w") as f:
+            f.create_dataset('vocabulary', data=vocabulary)
+
+        client = minio.Minio(
+            endpoint=Variable.get("minio_endpoint"),
+            access_key=Variable.get("minio_access_key"),
+            secret_key=Variable.get("minio_secret_key"),
+            secure=False,
+        )
+
+        client.fput_object(
+            bucket_name="emotiai",
+            object_name=os.path.join("goemotion", "vocabulary.h5"),
+            file_path=output_file_path,
+        )
+
         mlp = MLP(
             vectorizer=vectorizer,
             max_token=MLPConfig.MAX_TOKEN,

@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile.api
+      # target: builder
+    container_name: api
+    platform: linux/amd64
+    # This is useful for ensuring that Jenkins remains running unless you decide to stop it.
+    restart: unless-stopped
+    privileged: true # mandatory
+    user: root # mandatory
+    ports:
+      - 8080:8080 # host port : api port
+    environment:
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - MLFLOW_REGISTERED_MODEL=${MLFLOW_REGISTERED_MODEL}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_ENDPOINT_URL=${MINIO_ENDPOINT_URL}

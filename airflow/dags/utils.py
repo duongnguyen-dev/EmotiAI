@@ -26,8 +26,6 @@ def load_ds(dataset_type: str, key: str, secret: str, endpoint_url: str):
         endpoint_url=endpoint_url
     )
 
-    features = []
-
     with s3.open(f's3://emotiai/goemotion/{dataset_type}.h5', 'rb') as f:
         h5_file = h5py.File(f, 'r')
 
