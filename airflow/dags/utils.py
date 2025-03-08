@@ -10,7 +10,6 @@ def set_tracking_uri(experiment: str, framework: str, tracking_uri: str):
     - experiment: Model experiment name, for example '/mlp' to track Multi layer perceptron experiments.
     - framework: It can be either 'tensorflow', 'sklearn', etc.
     """
-
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(experiment)
 
@@ -32,13 +31,8 @@ def load_ds(dataset_type: str, key: str, secret: str, endpoint_url: str):
     with s3.open(f's3://emotiai/goemotion/{dataset_type}.h5', 'rb') as f:
         h5_file = h5py.File(f, 'r')
 
-        features_group = h5_file["features"]
-
-        features = []
-        for name, dataset in features_group.items():
-            features.append(dataset[:])
-
         # Stack all tensors into a single tensor (if they have the same shape)
+        features = h5_file["features"]
         tensored_features = tf.convert_to_tensor(features)
 
         labels_dataset = h5_file['labels']

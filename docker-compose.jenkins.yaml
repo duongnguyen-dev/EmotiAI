@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: dockerfile.jenkins
+      # target: builder
+    container_name: jenkins
+    platform: linux/amd64
+    # This is useful for ensuring that Jenkins remains running unless you decide to stop it.
+    restart: unless-stopped
+    privileged: true # mandatory
+    user: root # mandatory
+    ports:
+      - 8081:8080 # host port : api port
+      - 50000:50000 # JNLP agent connections
+    # restart: "no"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock # mandatory
+
+volumes:
+  jenkins_home: 

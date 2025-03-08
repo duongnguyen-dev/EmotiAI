@@ -65,7 +65,7 @@ services:
       --backend-store-uri postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DOCKER_NETWORK_IP}:${POSTGRES_PORT}/${POSTGRES_DB}
       --host 0.0.0.0
       --serve-artifacts
-      --artifacts-destination s3://${MLFLOW_BUCKET_NAME}
+      --artifacts-destination s3://${MLFLOW_ARTIFACTS_DESTINATION}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${MLFLOW_PORT}/"]
       interval: 30s

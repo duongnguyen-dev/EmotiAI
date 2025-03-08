@@ -3,7 +3,6 @@ nltk.download('wordnet')
 nltk.download('stopwords')
 
 from nltk.corpus import stopwords
-from sklearn.preprocessing import MultiLabelBinarizer
 
 def preprocess_features(raw_data: list[str]):
     '''

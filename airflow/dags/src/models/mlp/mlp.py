@@ -2,21 +2,14 @@ import tensorflow as tf
 import keras
 from keras.api.models import Model
 
-class MLPConfig:
-    MAX_TOKEN=20000
-    SEQUENCE_LENGTH=13
-    EMBEDDING_SIZE=128
-    NUM_CLASSES=28
-    INITIALIZER="uniform"
-    OUTPUT_MODE="int"
-
 class MLP(Model):
     def __init__(self,
-                 max_token=MLPConfig.MAX_TOKEN,
-                 sequence_length=MLPConfig.SEQUENCE_LENGTH,
-                 embedding_size=MLPConfig.EMBEDDING_SIZE, 
-                 num_classes=MLPConfig.NUM_CLASSES,
-                 initializer=MLPConfig.INITIALIZER,
+                 vectorizer,
+                 max_token,
+                 sequence_length,
+                 embedding_size, 
+                 num_classes,
+                 initializer,
                  **kwargs):
         super().__init__(**kwargs)
         self.max_token = max_token
@@ -25,12 +18,7 @@ class MLP(Model):
         self.initializer = initializer
         self.num_classes = num_classes
 
-        self.vectorizer = keras.layers.TextVectorization(
-            max_tokens=MLPConfig.MAX_TOKEN,
-            output_mode=MLPConfig.OUTPUT_MODE,
-            output_sequence_length=int(MLPConfig.SEQUENCE_LENGTH),
-            standardize=None
-        )
+        self.vectorizer = vectorizer
         
         self.embedding = keras.layers.Embedding(input_dim=self.max_token, # set input shape
                                             output_dim=self.embedding_size, # set size of embedding vector
@@ -41,7 +29,7 @@ class MLP(Model):
         self.dense_layer_2 = keras.layers.Dense(256, activation="relu")
         self.global_average_1d = keras.layers.GlobalAveragePooling1D()
         self.output_layer = keras.layers.Dense(self.num_classes, activation="sigmoid")
-        self.input_shape = (sequence_length,)  
+        self.input_shape = (1,)  
 
     def call(self, inputs):
         tf.random.set_seed(42)
@@ -58,6 +46,7 @@ class MLP(Model):
     def get_config(self):
         # Return only custom parameters
         return {
+            'vectorizer': self.vectorizer,
             'max_token': self.max_token,
             'sequence_length': self.sequence_length,
             'embedding_size': self.embedding_size,
