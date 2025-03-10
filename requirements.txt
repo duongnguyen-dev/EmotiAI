@@ -12,3 +12,4 @@ numpy==1.26.4
 s3fs==2025.2.0
 boto3==1.37.0
 botocore==1.37.0
+ansible==11.3.0

@@ -11,8 +11,7 @@ COMMAND=$1
 # Execute the Docker Compose command
 case "$COMMAND" in
     up)
-        docker compose -f docker-compose.yaml up build
-        docker compose -f docker-compose.yaml up -d --no-build
+        docker compose -f docker-compose.yaml up -d
 
         # Initialize Conda for the current shell session
         eval "$(conda shell.bash hook)"
@@ -22,20 +21,23 @@ case "$COMMAND" in
         python data/create_label_table.py
         python data/insert_label_data.py
 
-        docker compose -f docker-compose.airflow.yaml build
-        docker compose -f docker-compose.airflow.yaml up -d --no-build
+        docker compose -f docker-compose.airflow.yaml up -d
 
-        docker compose -f docker-compose.jenkins.yaml build
-        docker compose -f docker-compose.jenkins.yaml up -d --no-build
+        docker compose -f docker-compose.jenkins.yaml up -d
 
-        docker compose -f docker-compose.api.yaml build
-        docker compose -f docker-compose.api.yaml up -d --no-build
+        docker compose -f docker-compose.api.yaml up -d 
+        
+        docker compose -f docker-compose.prom-graf.yaml up -d
+
+        docker compose -f docker-compose.elk.yaml up -d
         ;;
     down)
         docker compose -f docker-compose.airflow.yaml down
         docker compose -f docker-compose.yaml down
         ;;
     up-without-build)
+        docker compose -f docker-compose.elk.yaml up -d --no-build
+        docker compose -f docker-compose.prom-graf.yaml up -d --no-build
         docker compose -f docker-compose.yaml up -d --no-build
         docker compose -f docker-compose.airflow.yaml up -d --no-build
         docker compose -f docker-compose.api.yaml up -d --no-build

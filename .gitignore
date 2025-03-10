@@ -4,3 +4,8 @@ __pycache__
 mlruns
 /airflow/logs
 /airflow/dags/output
+_state
+indices
+snapshot_cache
+nodes
+node.lock
