@@ -27,6 +27,9 @@ case "$COMMAND" in
 
         docker compose -f docker-compose.jenkins.yaml build
         docker compose -f docker-compose.jenkins.yaml up -d --no-build
+
+        docker compose -f docker-compose.api.yaml build
+        docker compose -f docker-compose.api.yaml up -d --no-build
         ;;
     down)
         docker compose -f docker-compose.airflow.yaml down
@@ -35,6 +38,7 @@ case "$COMMAND" in
     up-without-build)
         docker compose -f docker-compose.yaml up -d --no-build
         docker compose -f docker-compose.airflow.yaml up -d --no-build
+        docker compose -f docker-compose.api.yaml up -d --no-build
         docker compose -f docker-compose.jenkins.yaml up -d --no-build
         ;;
     *)
