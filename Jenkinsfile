@@ -9,7 +9,7 @@ pipeline {
     }
     
     environment{
-        registry = 'duongnguyen2911/zero-shot-object-detection'
+        registry = 'duongnguyen2911/emotiai'
         registryCredential = 'dockerhub'      
     }
 
@@ -19,30 +19,42 @@ pipeline {
                 script {
                     echo 'Building image for deployment..'
                     dockerImage = docker.build registry + ":latest" 
-                    echo 'Pushing image to dockerhub..'
-                    docker.withRegistry( '', registryCredential ) {
-                        dockerImage.push()
-                        dockerImage.push('latest')
-                    }
                 }
             }
         }
-        stage('Deploy') {
-            agent {
-                kubernetes {
-                    containerTemplate {
-                        name "helm"
-                        image 'duongnguyen2911/serving_grounding_dino-jenkins:0.0.2'
-                        alwaysPullImage true // Always pull image in case of using the same tag
-                    }
-                }
-            }
+        stage('Test') {
             steps {
-                echo 'Deploying models..'
-                container('helm') {
-                    sh("helm upgrade --install app ./helm/app --namespace model-serving")
+                script {
+                    echo 'Check dependencies...'
+                    sh 'pip install -r serving/requirements.txt'
                 }
             }
         }
+        stage('Push') {
+            steps {
+                echo 'Pushing image to dockerhub..'
+                docker.withRegistry( '', registryCredential ) {
+                    dockerImage.push()
+                    dockerImage.push('latest')
+                }
+            }
+        }
+        // stage('Deploy') {
+        //     agent {
+        //         kubernetes {
+        //             containerTemplate {
+        //                 name "helm"
+        //                 image 'duongnguyen2911/serving_grounding_dino-jenkins:0.0.2'
+        //                 alwaysPullImage true // Always pull image in case of using the same tag
+        //             }
+        //         }
+        //     }
+        //     steps {
+        //         echo 'Deploying models..'
+        //         container('helm') {
+        //             sh("helm upgrade --install app ./helm/app --namespace model-serving")
+        //         }
+        //     }
+        // }
     }
 }

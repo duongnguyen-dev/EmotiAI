@@ -13,4 +13,5 @@ RUN pip install git+https://github.com/mpgreg/airflow-provider-great-expectation
 
 # Requirement for running airflow code
 COPY ./requirements.txt .
+COPY ./src ./opt/airflow/dags/src
 RUN pip install --no-cache-dir -r requirements.txt

@@ -1,7 +1,0 @@
-class MLPConfig:
-    MAX_TOKEN=20000
-    SEQUENCE_LENGTH=13
-    EMBEDDING_SIZE=128
-    NUM_CLASSES=28
-    INITIALIZER="uniform"
-    OUTPUT_MODE="int"

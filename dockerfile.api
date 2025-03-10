@@ -13,11 +13,12 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY ./serving /app
+COPY ./src /app
 
 EXPOSE 3000
 
 RUN pip install -r requirements.txt --no-cache-dir
-
+RUN pip install 
 # FastAPI port = Container port
 # The best way to write docker file is to use an Entrypoint like this
 ENTRYPOINT [ "uvicorn"]

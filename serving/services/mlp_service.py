@@ -72,6 +72,3 @@ class MultiLayerPerceptronService:
         preprocessed_text = self.preprocess(text)
         y_pred = self.model.predict(preprocessed_text)
         return {"predictions": y_pred}
-
-    def postprocess(self):
-        pass
