@@ -9,3 +9,8 @@ indices
 snapshot_cache
 nodes
 node.lock
+
+
+/infras/ansible/secrets/*.json
+/infras/ansible/inventory
+/infras/terraform/secrets/.*json

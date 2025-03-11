@@ -1,15 +1,16 @@
 - name: Create a Compute Engine instance for Jenkins
   hosts: localhost
+  gather_facts: false # Set this to fail solve this error: MODULE FAILURE: Module \"ansible.builtin.gather_facts\" returned non UTF-8 data in the JSON response.\nSee stdout/stderr for the exact error
   tasks:
     - name: Start an instance
       gcp_compute_instance:
         name: jenkins-instance
         machine_type: e2-small
         zone: asia-southeast1-b # Singapore
-        project: true-oasis-438103-a2
+        project: fine-ring-448014-h4 # Change this with your GCP project ID
         # The service account is needed to create the resources
         auth_kind: serviceaccount
-        service_account_file: ../secrets/true-oasis-438103-a2-3588212cc52d.json # replace this with your own service account private key
+        service_account_file: ../secrets/fine-ring-448014-h4-9e4bab6121f5.json # replace this with your own service account private key
         disks:
           - auto_delete: true # Auto delete the disk when the VM is terminated
             boot: true # The disk contains the OS required to boot the machine 
@@ -38,6 +39,6 @@
           - 0.0.0.0/0 # Allow traffic from any source (use a more specific source range for security)
         direction: INGRESS # Direction from outside to inside
         description: Allow incoming traffic on port 30000
-        project: true-oasis-438103-a2
+        project: fine-ring-448014-h4 # Change this with your GCP project ID
         auth_kind: serviceaccount
-        service_account_file: ../secrets/true-oasis-438103-a2-3588212cc52d.json # replace this with your own service account private key
+        service_account_file: ../secrets/fine-ring-448014-h4-9e4bab6121f5.json # replace this with your own service account private key
