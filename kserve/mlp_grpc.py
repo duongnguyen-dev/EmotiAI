@@ -65,7 +65,7 @@ class MLPModel(Model):
         
         vectorized_text = vectorizer(preprocessed_text)
         tensor_vectorized_text = tf.expand_dims(vectorized_text, axis=0)
-        y_pred = self.model.predict(tensor_vectorized_text)["predictions"]
+        y_pred = self.model.predict(tensor_vectorized_text)
         result = np.argwhere(y_pred > 0.5)
 
         classnames = [
