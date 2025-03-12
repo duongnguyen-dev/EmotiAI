@@ -116,7 +116,7 @@ async def MLP(prompt: str):
                     "neutral"
                 ]
 
-                postprocessed_result = [classnames[i] for i in result]
+                postprocessed_result = [classnames[i] for i in result[0]]
 
         # Labels for all metrics
         label = {"api": "/mlp"}

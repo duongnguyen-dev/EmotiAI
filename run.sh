@@ -30,6 +30,9 @@ case "$COMMAND" in
         docker compose -f docker-compose.prom-graf.yaml up -d
 
         docker compose -f docker-compose.elk.yaml up -d
+
+        ./keserve/build_kserve.sh
+        ./kserve/run_kserve.sh
         ;;
     down)
         docker compose -f docker-compose.airflow.yaml down
@@ -42,6 +45,7 @@ case "$COMMAND" in
         docker compose -f docker-compose.airflow.yaml up -d --no-build
         docker compose -f docker-compose.api.yaml up -d --no-build
         docker compose -f docker-compose.jenkins.yaml up -d --no-build
+        ./kserve/run_kserve.sh
         ;;
     *)
         echo "Invalid command: $COMMAND"

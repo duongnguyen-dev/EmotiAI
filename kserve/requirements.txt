@@ -5,3 +5,4 @@ nltk==3.9.1
 s3fs==2025.2.0
 boto3==1.37.0
 botocore==1.37.0
+alibi-detect==0.12.0
