@@ -26,10 +26,10 @@ resource "google_container_cluster" "emotiai-cluster" {
 
 // Node pool: a group of VMs within the cluster, 
 // and you can have multiple node pools with different configurations in the same cluster.
-resource "google_container_node_pool" "zod-nodes" {
+resource "google_container_node_pool" "emotiai-nodes" {
   name = "emotiai-node-pool"
   location = var.zone
-  cluster = google_container_cluster.zod-cluster.name
+  cluster = google_container_cluster.emotiai-cluster.name
   node_count = 2
   
   node_config {

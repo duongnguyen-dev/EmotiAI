@@ -11,7 +11,8 @@ def main():
         database=os.getenv("POSTGRES_DB"),
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
-        port=os.getenv("POSTGRES_PORT")
+        host=os.getenv("34.142.172.214"),
+        port=os.getenv("30000"),
     )
 
     for i in ["train", "test", "dev"]:
@@ -23,11 +24,11 @@ def main():
             )
         """
 
-        try:
-            pc.execute_query(create_table_query, params=None)
-            logger.info("Create table successfully")
-        except Exception as e:
-            logger.error(e)
+        # try:
+        pc.execute_query(create_table_query, params=None)
+        #     logger.info("Create table successfully")
+        # except Exception as e:
+        #     logger.error(e)
 
 if __name__ == "__main__":
     main()

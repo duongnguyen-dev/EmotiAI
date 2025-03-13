@@ -3,7 +3,7 @@ import psycopg2
 from sqlalchemy import create_engine
 
 class PostgresSQLClient:
-    def __init__(self, database, user, password, host="127.0.0.1", port="5437"):
+    def __init__(self, database, user, password, host, port):
         self.database = database
         self.user = user
         self.password = password

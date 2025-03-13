@@ -47,6 +47,15 @@ case "$COMMAND" in
         docker compose -f docker-compose.jenkins.yaml up -d --no-build
         ./kserve/run_kserve.sh
         ;;
+    insert-data)
+        # Initialize Conda for the current shell session
+        eval "$(conda shell.bash hook)"
+        conda activate emotiai
+        python data/create_table.py
+        python data/insert_into_table.py
+        python data/create_label_table.py
+        python data/insert_label_data.py
+        ;;
     *)
         echo "Invalid command: $COMMAND"
         exit 1

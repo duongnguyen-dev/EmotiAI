@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: extra-env-vars
+data:
+  AIRFLOW_VAR_POSTGRES_CONN: postgresql+psycopg2://postgres:eA2X26eyT3@$mlflow-postgresql:5432/mlflow
+  AIRFLOW_VAR_MINIO_ENDPOINT: http://mlflow-minio:$9001
+  AIRFLOW_VAR_MINIO_ACCESS_KEY: admin
+  AIRFLOW_VAR_MINIO_SECRET_KEY: MJabboxBGS
+  AIRFLOW_VAR_MLFLOW_TRACKING_URI: http://34.87.62.22:80
+  AIRFLOW_VAR_MLFLOW_BUCKET_NAME: mlflow

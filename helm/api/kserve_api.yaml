@@ -1,0 +1,43 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: emotiai-mlp-model
+spec:
+  predictor:
+    containers: 
+    - name: emoitai-mlp-model
+      image: duongnguyen2911/emotiai-kserve:v1
+      ports: 
+        - containerPort: 8080
+          protocol: TCP
+      env:
+        - name: MINIO_ENDPOINT_URL
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: endpoint_url
+        - name: MLFLOW_TRACKING_URI
+          valueFrom:
+            secretKeyRef:
+              name: mlflow-credentials
+              key: tracking_uri
+        - name: MLFLOW_REGISTERED_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: mlflow-credentials
+              key: registered_model
+        - name: MLFLOW_ARTIFACTS_DESTINATION
+          valueFrom:
+            secretKeyRef:
+              name: mlflow-credentials
+              key: artifacts_destination
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: access_key
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: secret_key

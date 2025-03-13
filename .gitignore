@@ -12,5 +12,10 @@ node.lock
 
 
 /infras/ansible/secrets/*.json
+/infras/terraform/secrets/*.json
 /infras/ansible/inventory
-/infras/terraform/secrets/.*json
+
+.terraform.lock.hcl
+.terraform
+.terraform.tfstate.lock.info
+terraform.tfstate

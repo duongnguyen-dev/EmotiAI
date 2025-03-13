@@ -12,3 +12,8 @@ brew install buildpacks/tap/pack
 - Add services account and generate key as json file, then put it into /secrets folder
 - Run `gcloud auth application-default login`
 - Then `ansible-playbook -i inventory deploy_jenkins/create_compute_instance.yaml`
+
+
+- Solve psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such file or directory
+
+`brew install postgresql@14`

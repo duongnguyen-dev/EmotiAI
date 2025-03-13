@@ -77,7 +77,7 @@ with DAG(
         ti = kwargs["ti"]
 
         client = minio.Minio(
-            endpoint=Variable.get("minio_endpoint"),
+            endpoint=Variable.get("minio_endpoint").split("://")[-1],
             access_key=Variable.get("minio_access_key"),
             secret_key=Variable.get("minio_secret_key"),
             secure=False,
