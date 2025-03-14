@@ -1,132 +1,229 @@
-CHART NAME: {{ .Chart.Name }}
-CHART VERSION: {{ .Chart.Version }}
-APP VERSION: {{ .Chart.AppVersion }}
-
-Did you know there are enterprise versions of the Bitnami catalog? For enhanced secure software supply chain features, unlimited pulls from Docker, LTS support, or application customization, see Bitnami Premium or Tanzu Application Catalog. See https://www.arrow.com/globalecs/na/vendors/bitnami for more information.
-
-{{- $releaseNamespace := include "common.names.namespace" . }}
-{{- $clusterDomain := .Values.clusterDomain }}
-{{- $fullname := include "common.names.fullname" . }}
-{{- $airflowSecretName := include "airflow.secretName" . }}
-{{- $baseUrl := (include "airflow.baseUrl" .) }}
-
-** Please be patient while the chart is being deployed **
-
-{{- if .Values.diagnosticMode.enabled }}
-
-The chart has been deployed in diagnostic mode. All probes have been disabled and the command has been overwritten with:
-
-  command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 4 }}
-  args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 4 }}
-
-Get the list of pods by executing:
-
-    kubectl get pods --namespace {{ $releaseNamespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
-
-Access the pod you want to debug by executing
-
-    kubectl exec --namespace {{ $releaseNamespace }} -ti <NAME OF THE POD> -- bash
-
-In order to replicate the container startup scripts execute this command:
-
-    /opt/bitnami/scripts/airflow/entrypoint.sh /opt/bitnami/scripts/airflow/run.sh
-
-{{- else }}
-
-{{- if and (contains "127.0.0.1" $baseUrl) (not (eq "ClusterIP" .Values.service.type)) }}
-###############################################################################
-### ERROR: You did not provide an external URL in your 'helm install' call ###
-###############################################################################
-
-This deployment will be incomplete until you configure Airflow with a resolvable
-host. To configure Airflow with the URL of your service:
-
-1. Get the Airflow URL by running:
-
-  {{- if eq "NodePort" .Values.service.type }}
-
-    export AIRFLOW_HOST=$(kubectl get nodes --namespace {{ $releaseNamespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
-    export AIRFLOW_PORT=$(kubectl get --namespace {{ $releaseNamespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ $fullname }})
-
-  {{- else if eq "LoadBalancer" .Values.service.type }}
-
-  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-        Watch the status with: 'kubectl get svc --namespace {{ $releaseNamespace }} -w {{ $fullname }}'
-
-    export AIRFLOW_HOST=$(kubectl get svc --namespace {{ $releaseNamespace }} {{ $fullname }} --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
-    export AIRFLOW_PORT=80
-
+{{- /* if remote_logging has been enabled by the user */ -}}
+{{- $remote_logging_enabled := false }}
+{{- $remote_logging_envvars := list "AIRFLOW__CORE__REMOTE_LOGGING" "AIRFLOW__LOGGING__REMOTE_LOGGING" }}
+{{- range $key, $val := .Values.airflow.config }}
+  {{- if has $key $remote_logging_envvars }}
+  {{- $remote_logging_enabled = true }}
   {{- end }}
+{{- end }}
+{{- range $env := .Values.airflow.extraEnv }}
+  {{- if has $env.name $remote_logging_envvars }}
+  {{- $remote_logging_enabled = true }}
+  {{- end }}
+{{- end }}
 
-2. Complete your Airflow deployment by running:
+{{- /* if an extra volume has been mounted for worker logs */ -}}
+{{- $extra_volumes_worker_logs := false }}
+{{- if include "airflow.extraVolumeMounts.has_log_path" . }}
+{{- $extra_volumes_worker_logs = true }}
+{{- end }}
+{{- if .Values.workers.enabled }}
+  {{- if include "airflow._has_logs_path" (dict "Values" .Values "volume_mounts" .Values.workers.extraVolumeMounts) }}
+  {{- $extra_volumes_worker_logs = true }}
+  {{- end }}
+{{- end }}
+{{- if and (include "airflow.executor.kubernetes_like" .) (not .Values.airflow.kubernetesPodTemplate.stringOverride) }}
+  {{- if include "airflow._has_logs_path" (dict "Values" .Values "volume_mounts" .Values.airflow.kubernetesPodTemplate.extraVolumeMounts) }}
+  {{- $extra_volumes_worker_logs = true }}
+  {{- end }}
+{{- end }}
 
-    {{ include "common.utils.secret.getvalue" (dict "secret" $airflowSecretName "field" "airflow-password" "context" $) }}
-    {{ include "common.utils.secret.getvalue" (dict "secret" $airflowSecretName "field" "airflow-fernet-key" "context" $) }}
-    {{ include "common.utils.secret.getvalue" (dict "secret" $airflowSecretName "field" "airflow-secret-key" "context" $) }}
-    helm upgrade --namespace {{ $releaseNamespace }} {{ .Release.Name }} oci://registry-1.docker.io/bitnamicharts/{{ .Chart.Name }} \
-      --set service.type={{ .Values.service.type }} \
-      --set web.baseUrl=http://$AIRFLOW_HOST:$AIRFLOW_PORT \
-      --set auth.password=$AIRFLOW_PASSWORD \
-      --set auth.fernetKey=$AIRFLOW_FERNETKEY \
-      --set auth.secretKey=$AIRFLOW_SECRETKEY
+{{- /* if we show the fernet_key warning */ -}}
+{{- $fernet_key_warning := true }}
+{{- $fernet_key_envvars := list "AIRFLOW__CORE__FERNET_KEY" "AIRFLOW__CORE__FERNET_KEY_CMD" "AIRFLOW__CORE__FERNET_KEY_SECRET" }}
+{{- if not (eq .Values.airflow.fernetKey "7T512UXSSmBOkpWimFHIVb8jK6lfmSAvx4mO6Arehnc=")  }}
+{{- $fernet_key_warning = false }}
+{{- end }}
+{{- range $key, $val := .Values.airflow.config }}
+  {{- if has $key $fernet_key_envvars }}
+  {{- $fernet_key_warning = false }}
+  {{- end }}
+{{- end }}
+{{- range $env := .Values.airflow.extraEnv }}
+  {{- if has $env.name $fernet_key_envvars }}
+  {{- $fernet_key_warning = false }}
+  {{- end }}
+{{- end }}
 
-{{- else }}
+{{- /* if we show the webserver secret_key warning */ -}}
+{{- $web_secret_warning := true }}
+{{- $web_secret_envvars := list "AIRFLOW__WEBSERVER__SECRET_KEY" "AIRFLOW__WEBSERVER__SECRET_KEY_CMD" "AIRFLOW__WEBSERVER__SECRET_KEY_SECRET" }}
+{{- if not (eq .Values.airflow.webserverSecretKey "THIS IS UNSAFE!")  }}
+{{- $web_secret_warning = false }}
+{{- end }}
+{{- range $key, $val := .Values.airflow.config }}
+  {{- if has $key $web_secret_envvars }}
+  {{- $web_secret_warning = false }}
+  {{- end }}
+{{- end }}
+{{- range $env := .Values.airflow.extraEnv }}
+  {{- if has $env.name $web_secret_envvars }}
+  {{- $web_secret_warning = false }}
+  {{- end }}
+{{- end }}
 
-Airflow can be accessed via port {{ .Values.service.ports.http }} on the following DNS name from within your cluster:
+{{- /* if we show the external database password warning */ -}}
+{{- $external_database_password_warning := false }}
+{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.passwordSecret) }}
+  {{- /* don't show a warning if the password is empty */ -}}
+  {{- if .Values.externalDatabase.password }}
+  {{- $external_database_password_warning = true }}
+  {{- end }}
+{{- end }}
 
-    {{ printf "%s.%s.svc.%s" $fullname $releaseNamespace $clusterDomain }}
+{{- /* if we show the external redis password warning */ -}}
+{{- $external_redis_password_warning := false }}
+{{- if and (not .Values.redis.enabled) (not .Values.externalRedis.passwordSecret) }}
+  {{- /* don't show a warning if the password is empty */ -}}
+  {{- if .Values.externalRedis.password }}
+  {{- $external_redis_password_warning = true }}
+  {{- end }}
+{{- end }}
 
-To connect to Airflow from outside the cluster, perform the following steps:
+{{- /* if we show the extraPipPackages warning */ -}}
+{{- $extra_pip_warning := false }}
+{{- if .Values.airflow.extraPipPackages }}
+{{- $extra_pip_warning = true }}
+{{- else if .Values.airflow.kubernetesPodTemplate.extraPipPackages }}
+{{- $extra_pip_warning = true }}
+{{- else if .Values.scheduler.extraPipPackages }}
+{{- $extra_pip_warning = true }}
+{{- else if .Values.web.extraPipPackages }}
+{{- $extra_pip_warning = true }}
+{{- else if .Values.workers.extraPipPackages }}
+{{- $extra_pip_warning = true }}
+{{- else if .Values.flower.extraPipPackages }}
+{{- $extra_pip_warning = true }}
+{{- end }}
+
+{{- /* if we show the embedded postgres warning */ -}}
+{{- $embedded_postgres_warning := false }}
+{{- if .Values.postgresql.enabled }}
+{{- $embedded_postgres_warning = true }}
+{{- end }}
+
+{{- /* if we show the git-sync known_hosts warning */ -}}
+{{- $known_host_warning := false }}
+{{- if and (.Values.dags.gitSync.enabled) (.Values.dags.gitSync.sshSecret) (not .Values.dags.gitSync.sshKnownHosts) }}
+{{- $known_host_warning = true }}
+{{- end }}
+
+{{- /* if we show the scheduler livenessProbe warning */ -}}
+{{- $scheduler_livenessProbe_warning := false }}
+{{- if not .Values.scheduler.livenessProbe.enabled }}
+{{- $scheduler_livenessProbe_warning = true }}
+{{- end }}
+
+{{- /* if we show the scheduler livenessProbe taskCreationCheck warning */ -}}
+{{- $scheduler_livenessProbe_taskCreationCheck_warning := false }}
+{{- if and (.Values.scheduler.livenessProbe.enabled) (not .Values.scheduler.livenessProbe.taskCreationCheck.enabled) }}
+{{- $scheduler_livenessProbe_taskCreationCheck_warning = true }}
+{{- end }}
+
+========================================================================
+Thanks for deploying Apache Airflow with the User-Community Helm Chart!
+
+====================
+        TIPS
+====================
+{{- range $user := .Values.airflow.users }}
+{{- if and (eq $user.username "admin") (eq $user.password "admin") }}
+Default Airflow Webserver login:
+  * Username:  admin
+  * Password:  admin
+{{- end }}
+{{ end }}
+
+{{- if not (or .Values.logs.persistence.enabled $remote_logging_enabled $extra_volumes_worker_logs) }}
+You have NOT set up persistence for worker task logs, do this by:
+  1. Using a PersistentVolumeClaim with `logs.persistence.*`
+  2. Using remote logging with `AIRFLOW__LOGGING__REMOTE_LOGGING`
+{{ end }}
+
+{{- if and (not .Values.ingress.enabled) (eq .Values.web.service.type "ClusterIP") }}
+It looks like you have NOT exposed the Airflow Webserver, do this by:
+  1. Using a Kubernetes Ingress with `ingress.*`
+  2. Using a Kubernetes LoadBalancer/NodePort type Service with `web.service.type`
+{{ end }}
 
 {{- if .Values.ingress.enabled }}
+Your Kubernetes Ingress endpoint URLs:
+  * Airflow Webserver:  http{{ if .Values.ingress.web.tls.enabled }}s{{ end }}://{{ .Values.ingress.web.host }}{{ .Values.ingress.web.path }}/
+{{- if .Values.flower.enabled }}
+  * Flower Dashboard:   http{{ if .Values.ingress.flower.tls.enabled }}s{{ end }}://{{ .Values.ingress.flower.host }}{{ .Values.ingress.flower.path }}/
+{{- end }}
+{{ end }}
 
-1. Get the Airflow URL and associate its hostname to your cluster external IP:
+{{- if eq .Values.web.service.type "LoadBalancer" }}
+You deployed a "LoadBalancer" type Service for the Airflow Webserver:
+  * External IP:    kubectl get svc/{{ include "airflow.fullname" . }}-web --namespace {{ .Release.Namespace }} -o jsonpath="{.status.loadBalancer.ingress[0].ip}"
+  * External Port:  {{ .Values.web.service.externalPort }}
+  * NOTE:           it may take a few minutes for the External IP to be provisioned by your cloud provider
+{{ end }}
 
-    export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
-    echo "Airflow URL: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.hostname }}"
-    echo "$CLUSTER_IP  {{ .Values.ingress.hostname }}" | sudo tee -a /etc/hosts
+{{- if eq .Values.web.service.type "NodePort" }}
+You deployed a "NodePort" type Service for the Airflow Webserver:
+  * Node IP:    kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}"
+  * Node Port:  kubectl get svc/{{ include "airflow.fullname" . }}-web --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}"
+  * NOTE:       any Node's external IP will work
+{{ end }}
 
-{{- else if eq .Values.service.type "ClusterIP" }}
+{{- if true }}
+Use these commands to port-forward the Services to your localhost:
+  * Airflow Webserver:  kubectl port-forward svc/{{ include "airflow.fullname" . }}-web 8080:8080 --namespace {{ .Release.Namespace }}
+{{- if .Values.flower.enabled }}
+  * Flower Dashboard:   kubectl port-forward svc/{{ include "airflow.fullname" . }}-flower 5555:5555 --namespace {{ .Release.Namespace }}
+{{- end }}
+{{ end }}
 
-1.  Create a port-forward to the service:
+{{- if or ($fernet_key_warning) ($web_secret_warning) ($extra_pip_warning) ($embedded_postgres_warning) ($known_host_warning) }}
+====================
+      WARNINGS
+====================
+{{- if $fernet_key_warning }}
+[CRITICAL] default fernet encryption key value!
+  * HELP: set a custom value with `airflow.fernetKey` or `AIRFLOW__CORE__FERNET_KEY`
+{{ end }}
 
-    kubectl port-forward --namespace {{ $releaseNamespace }} svc/{{ $fullname }} {{ .Values.service.ports.http }}:{{ .Values.service.ports.http }} &
-    echo "Airflow URL: http{{ if .Values.web.tls }}s{{ end }}://127.0.0.1:{{ .Values.service.ports.http }}"
+{{- if $web_secret_warning }}
+[CRITICAL] default webserver secret_key value!
+  * HELP: set a custom value with `airflow.webserverSecretKey` or `AIRFLOW__WEBSERVER__SECRET_KEY`
+{{ end }}
 
-{{- else if eq .Values.service.type "NodePort" }}
+{{- if $external_database_password_warning }}
+[CRITICAL] external database password is set using plain-text value!
+  * HELP: create a Kubernetes secret with your database password and configure `externalDatabase.passwordSecret`
+{{ end }}
 
-1. Obtain the NodePort IP and port:
+{{- if $external_redis_password_warning }}
+[CRITICAL] external redis password is set using plain-text value!
+  * HELP: create a Kubernetes secret with your redis password and configure `externalRedis.passwordSecret`
+{{ end }}
 
-    export NODE_IP=$(kubectl get nodes --namespace {{ $releaseNamespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
-    export NODE_PORT=$(kubectl get svc --namespace {{ $releaseNamespace }} {{ $fullname }} -o jsonpath="{.spec.ports[0].nodePort}")
-    echo "Airflow URL: http{{ if .Values.web.tls }}s{{ end }}://${NODE_IP}:$NODE_PORT"
+{{- if $extra_pip_warning }}
+[HIGH] using `extraPipPackages` can cause unexpected runtime errors if external PyPi packages change between Pod restarts
+  * HELP: create a Docker image with your pip packages installed and use it with `airflow.image.*`
+{{ end }}
 
-{{- else if eq .Values.service.type "LoadBalancer" }}
+{{- if $embedded_postgres_warning }}
+[HIGH] using the embedded postgres database is NOT suitable for production!
+  * HELP: use an external postgres/mysql database with `externalDatabase.*`
+{{ end }}
 
-1. Obtain the LoadBalancer IP:
+{{- if $known_host_warning }}
+[HIGH] git-sync ssh known_hosts verification is disabled!
+  * HELP: set `dags.gitSync.sshKnownHosts` with the ssh fingerprint of your git host
+{{ end }}
 
-  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ $fullname }}'
+{{- if $scheduler_livenessProbe_warning }}
+[MEDIUM] the scheduler liveness probe is disabled, the scheduler may not be restarted if it becomes unhealthy!
+  * HELP: enable the probe with `scheduler.livenessProbe.enabled`
+{{ end }}
 
-    export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ $fullname }} --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
-    echo "Airflow URL: http{{ if .Values.web.tls }}s{{ end }}://${SERVICE_IP}:{{ .Values.service.ports.http }}"
+{{- if $scheduler_livenessProbe_taskCreationCheck_warning }}
+[MEDIUM] the scheduler "task creation check" is disabled, the scheduler may not be restarted if it deadlocks!
+  * HELP: configure the check with `scheduler.livenessProbe.taskCreationCheck.*`
+{{ end }}
 
 {{- end }}
-
-2. Open a browser and access Airflow using the obtained URL.
-
-3. Get your Airflow login credentials by running:
-
-    {{ include "common.utils.secret.getvalue" (dict "secret" $airflowSecretName "field" "airflow-password" "context" $) }}
-    echo User:     {{ .Values.auth.username }}
-    echo Password: $AIRFLOW_PASSWORD
-
-{{- end }}
-{{- end }}
-
-{{ include "airflow.validateValues" . }}
-{{- include "common.warnings.rollingTag" .Values.image }}
-{{- include "common.warnings.rollingTag" .Values.metrics.image }}
-{{- include "common.warnings.resources" (dict "sections" (list "scheduler" "web" "worker" "defaultSidecars.syncDAGsPlugins" "defaultInitContainers.loadDAGsPlugins" "metrics") "context" $) }}
-{{- include "common.warnings.modifiedImages" (dict "images" (list .Values.image .Values.metrics.image) "context" $) }}
-{{- include "common.errors.insecureImages" (dict "images" (list .Values.image .Values.metrics.image) "context" $) }}
+========================================================================
