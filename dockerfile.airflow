@@ -14,6 +14,8 @@ RUN pip install git+https://github.com/mpgreg/airflow-provider-great-expectation
 
 # Requirement for running airflow code
 COPY ./requirements.txt .
+# NOTE: if you want to use this image on k8s, you should uncomment these below line
 COPY ./airflow/dags /opt/airflow/dags
 COPY ./src /opt/airflow/dags/src
+
 RUN pip install --no-cache-dir --default-timeout=100 -r requirements.txt

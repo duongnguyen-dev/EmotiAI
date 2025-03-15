@@ -11,7 +11,7 @@ airflow:
   image:
     repository: duongnguyen2911/emotiai-airflow
     tag: v1
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     pullSecret: ""
     uid: 50000
     gid: 0
@@ -189,7 +189,7 @@ airflow:
   ## if we create a Deployment to perpetually sync `airflow.variables`
   ## - see docs for `airflow.usersUpdate`
   ##
-  variablesUpdate: true
+  variablesUpdate: false
 
   ## a list airflow pools to create
   ##
