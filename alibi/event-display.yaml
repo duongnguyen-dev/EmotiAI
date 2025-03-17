@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: emotiai-display
+  namespace: emotiai
+spec:
+  replicas: 1
+  selector:
+    matchLabels: &labels
+      app: emotiai-display
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: event-display
+          image: gcr.io/knative-releases/knative.dev/eventing-contrib/cmd/event_display
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: emotiai-display
+  namespace: emotiai
+spec:
+  selector:
+    app: emotiai-display
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

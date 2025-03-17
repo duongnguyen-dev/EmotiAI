@@ -20,7 +20,7 @@ from prometheus_client import start_http_server
 model = {}
 
 # Start Prometheus client
-start_http_server(port=8099, addr="0.0.0.0")
+start_http_server(port=os.getenv("PROMETHEUS_PORT"), addr=os.getenv("DOCKER_NETWORK_IP"))
 
 # Service name is required for most backends
 resource = Resource(attributes={SERVICE_NAME: "emotiai-service"})

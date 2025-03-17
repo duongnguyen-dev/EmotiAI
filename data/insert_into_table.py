@@ -33,7 +33,8 @@ def insert():
         database=os.getenv("POSTGRES_DB"),
         user=os.getenv("POSTGRES_USER"),
         password=os.getenv("POSTGRES_PASSWORD"),
-        port=os.getenv("POSTGRES_PORT")
+        port=os.getenv("POSTGRES_PORT"),
+        host=os.getenv("POSTGRES_HOST")
     )
 
     for i in ["train", "test", "dev"]:

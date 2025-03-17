@@ -6,3 +6,5 @@ down:
 	bash ./run.sh down
 up-without-build:
 	bash ./run.sh up-without-build
+deploy:
+	bash ./run_k8s.sh

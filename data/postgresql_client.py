@@ -31,9 +31,6 @@ class PostgresSQLClient:
         conn.close()
 
     def get_columns(self, table_name):
-        engine = create_engine(
-            f"postgresql+psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
-        )
-        conn = engine.connect()
+        conn = self.create_conn()
         df = pd.read_sql(f"select * from {table_name}", conn)
         return df.columns

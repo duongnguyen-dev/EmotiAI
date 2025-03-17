@@ -146,46 +146,22 @@ airflow:
   ##
   variables:
     - key: "postgres_conn"
-      value: "${POSTGRES_CONN}"
+      value: "postgresql+psycopg2://emotiai:emotiai@10.3.252.237:5432/goemotion"
     - key: "minio_endpoint"
-      value: "${MINIO_ENDPOINT}"
+      value: "http://10.3.254.51:80"
     - key: "minio_access_key"
-      value: "${MINIO_ACCESS_KEY}"
+      value: "admin"
     - key: "minio_secret_key"
-      value: "${MINIO_SECRET_KEY}"
+      value: "MJabboxBGS"
     - key: "mlflow_tracking_uri"
-      value: "${MLFLOW_TRACKING_URI}"
+      value: "http://34.87.62.22:80"
     - key: "mlflow_bucket_name"
-      value: "${MLFLOW_BUCKET_NAME}"
+      value: "mlflow"
 
   ## bash-like templates to be used in `airflow.variables`
   ## - see docs for `airflow.usersTemplates`
   ##
-  variablesTemplates: 
-    POSTGRES_CONN:
-      kind: configmap
-      name: postgres_conn
-      key: postgresql+psycopg2://bn_mlflow:eA2X26eyT3@$10.3.243.199:5432/bitnami_mlflow
-    MINIO_ENDPOINT:
-      kind: configmap
-      name: minio_endpoint
-      key: http://10.3.254.51:9001
-    MINIO_ACCESS_KEY:
-      kind: configmap
-      name: minio_access_key
-      key: admin
-    MINIO_SECRET_KEY: 
-      kind: configmap
-      name: minio_secret_key
-      key: MJabboxBGS
-    MLFLOW_TRACKING_URI: 
-      kind: configmap
-      name: mlflow_tracking_uri
-      key: http://34.87.62.22:80
-    MLFLOW_BUCKET_NAME:
-      kind: configmap
-      name: mlflow_bucket_name
-      key: mlflow
+  variablesTemplates: {}
   ## if we create a Deployment to perpetually sync `airflow.variables`
   ## - see docs for `airflow.usersUpdate`
   ##
