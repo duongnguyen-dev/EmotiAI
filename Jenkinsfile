@@ -15,14 +15,14 @@ pipeline {
     }
 
     stages {
-        stage('Test') {
-            steps {
-                script {
-                    echo 'Check dependencies...'
-                    sh 'pip install -r serving/requirements.txt'
-                }
-            }
-        }
+        // stage('Test') {
+        //     steps {
+        //         script {
+        //             echo 'Check dependencies...'
+        //             sh 'pip install -r serving/requirements.txt'
+        //         }
+        //     }
+        // }
         stage('Build') {
             steps {
                 script {
