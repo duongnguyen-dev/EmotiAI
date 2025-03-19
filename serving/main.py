@@ -20,7 +20,7 @@ from prometheus_client import start_http_server
 model = {}
 
 # Start Prometheus client
-start_http_server(port=os.getenv("PROMETHEUS_PORT"), addr=os.getenv("DOCKER_NETWORK_IP"))
+start_http_server(port=os.getenv("PROMETHEUS_PORT"), addr=os.getenv("PROMETHEUS_IP"))
 
 # Service name is required for most backends
 resource = Resource(attributes={SERVICE_NAME: "emotiai-service"})
@@ -39,7 +39,7 @@ set_tracer_provider(
 )
 tracer = get_tracer_provider().get_tracer("emotiai-service")
 jaeger_exporter = JaegerExporter(
-    agent_host_name=os.getenv("DOCKER_NETWORK_IP"),
+    agent_host_name=os.getenv("JAEGER_IP"),
     agent_port=os.getenv("JAEGER_PORT"),
 )
 span_processor = BatchSpanProcessor(jaeger_exporter)

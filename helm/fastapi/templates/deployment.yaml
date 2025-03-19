@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+  namespace: emotiai
+spec:
+  replicas: {{ .Values.deployment.spec.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ .Values.image.repository }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.deployment.spec.template.spec.containers.ports.containerPort}}
+              name: app-port
+          env:
+            - name: PROMETHEUS_PORT
+              value: {{ .Values.deployment.spec.template.spec.containers.env.prometheusPort }}
+            - name: PROMETHEUS_IP
+              value: {{ .Values.deployment.spec.template.spec.containers.env.prometheusIP }}
+            - name: JAEGER_PORT
+              value: {{ .Values.deployment.spec.template.spec.containers.env.JaegerPort }}
+            - name: JAEGER_IP
+              value: {{ .Values.deployment.spec.template.spec.containers.env.JaegerIP }}
+            - name: MLFLOW_TRACKING_URI
+              value: {{ .Values.deployment.spec.template.spec.containers.env.mlflowTrackingURI }}
+            - name: MLFLOW_REGISTERED_MODEL
+              value: {{ .Values.deployment.spec.template.spec.containers.env.mlflowRegisteredModel }}
+            - name: MINIO_ACCESS_KEY
+              value: {{ .Values.deployment.spec.template.spec.containers.env.minioAccessKey }}
+            - name: MINIO_SECRET_KEY
+              value: {{ .Values.deployment.spec.template.spec.containers.env.minioSecretKey }}
+            - name: MINIO_ENDPOINT_URL
+              value: {{ .Values.deployment.spec.template.spec.containers.env.minioEndpointURL }}

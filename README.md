@@ -32,10 +32,12 @@ pip install -e .
 # Deploy on k8s
 - Run this command `make deploy` to deploy all the service on k8s via helm.
 
-### Deploy jenkins on GCE using Ansible
+# Deploy jenkins on GCE using Ansible
 - Add services account and generate key as json file, then put it into /secrets folder
 - Run `gcloud auth application-default login`
 - Then `ansible-playbook -i inventory deploy_jenkins/create_compute_instance.yaml`
+
+# Create k8s cluster
 
 ### Installation and setup 
 1. Go to minio service and create a bucket to store preprocessed data

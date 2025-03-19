@@ -1,1 +1,1 @@
-web: python -m mlp
+web: python -m mlp_grpc

@@ -1,0 +1,35 @@
+# Default values for helm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: duongnguyen2911/emotiai-api:v1
+  pullPolicy: Always
+  tag: "v1"
+
+service:
+  spec:
+    ports:
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+    type: NodePort
+
+deployment:
+  spec:
+    replicas: 2
+    template:
+      spec:
+        containers:
+          ports:
+            containerPort: 3000
+          env:
+            prometheusPort: 80
+            prometheusIP: 35.198.247.58
+            jaegerPort: 16686
+            jaegerIP: 10.3.245.1
+            mlflowTrackingURI: 34.87.62.22
+            mlflowRegisteredModel: models:/goemotion_MLP/1
+            minioAccessKey: admin
+            minioSecretKey: MJabboxBGS
+            minioEndpointURL: http://10.3.254.51:80

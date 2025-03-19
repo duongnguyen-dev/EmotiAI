@@ -9,24 +9,25 @@ pipeline {
     }
     
     environment{
-        registry = 'duongnguyen2911/emotiai'
+        registry = 'duongnguyen2911/emotiai-api'
+        version = 'v2'
         registryCredential = 'dockerhub'      
     }
 
     stages {
-        stage('Build') {
-            steps {
-                script {
-                    echo 'Building image for deployment..'
-                    dockerImage = docker.build registry + ":latest" 
-                }
-            }
-        }
         stage('Test') {
             steps {
                 script {
                     echo 'Check dependencies...'
                     sh 'pip install -r serving/requirements.txt'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+                    echo 'Building image for deployment..'
+                    dockerImage = docker.build registry + version
                 }
             }
         }
@@ -39,22 +40,22 @@ pipeline {
                 }
             }
         }
-        // stage('Deploy') {
-        //     agent {
-        //         kubernetes {
-        //             containerTemplate {
-        //                 name "helm"
-        //                 image 'duongnguyen2911/serving_grounding_dino-jenkins:0.0.2'
-        //                 alwaysPullImage true // Always pull image in case of using the same tag
-        //             }
-        //         }
-        //     }
-        //     steps {
-        //         echo 'Deploying models..'
-        //         container('helm') {
-        //             sh("helm upgrade --install app ./helm/app --namespace model-serving")
-        //         }
-        //     }
-        // }
+        stage('Deploy') {
+            agent {
+                kubernetes {
+                    containerTemplate {
+                        name "helm"
+                        image 'duongnguyen2911/emotiai-jenkins:v2'
+                        alwaysPullImage true // Always pull image in case of using the same tag
+                    }
+                }
+            }
+            steps {
+                echo 'Deploying models..'
+                container('helm') {
+                    sh("helm upgrade --install emotiai-api ./helm/fastapi --namespace emotiai")
+                }
+            }
+        }
     }
 }

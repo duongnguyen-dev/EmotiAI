@@ -1,4 +1,4 @@
-# Copyright Broadcom, Inc. All Rights Reserved.
+  # Copyright Broadcom, Inc. All Rights Reserved.
 # SPDX-License-Identifier: APACHE-2.0
 
 ## @section Global parameters
@@ -281,7 +281,26 @@ datasources:
   ##     access: proxy
   ##     isDefault: true
   ##
-  secretDefinition: {}
+  secretDefinition:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        orgId: 1
+        url: http://prometheus.monitoring.svc.cluster.local
+        version: 1
+        editable: true
+        isDefault: true
+      - name: Alertmanager
+        uid: alertmanager
+        type: alertmanager
+        access: proxy
+        orgId: 1
+        url: http://prometheus-alertmanager.monitoring.svc.cluster.local:9093
+        version: 1
+        editable: true
+  
 ## Create notifiers from a configMap
 ## The notifiersName must contain the files
 ## @param notifiers.configMapName Name of a ConfigMap containing Grafana notifiers configuration
