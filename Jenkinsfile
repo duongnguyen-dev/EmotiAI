@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     echo 'Building image for deployment..'
-                    dockerImage = docker.build registry + ":" version
+                    dockerImage = docker.build registry
                 }
             }
         }
