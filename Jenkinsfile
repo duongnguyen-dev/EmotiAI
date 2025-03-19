@@ -27,7 +27,8 @@ pipeline {
             steps {
                 script {
                     echo 'Building image for deployment..'
-                    dockerImage = docker.build("${registry}:${version}" , "-f dockerfile.api .")
+                    sh 'ls -l'
+                    dockerImage = docker.build("${registry}:${version}" , "--file dockerfile.api --platform linux/amd64 .")
                 }
             }
         }
