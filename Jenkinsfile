@@ -33,10 +33,12 @@ pipeline {
         }
         stage('Push') {
             steps {
-                echo 'Pushing image to dockerhub..'
-                docker.withRegistry( '', registryCredential ) {
-                    dockerImage.push()
-                    dockerImage.push('latest')
+                script {
+                    echo 'Pushing image to dockerhub..'
+                    docker.withRegistry( '', registryCredential ) {
+                        dockerImage.push()
+                        dockerImage.push(version)
+                    }
                 }
             }
         }
