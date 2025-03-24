@@ -18,7 +18,7 @@ with DAG(
         from mlflow.types import TensorSpec, Schema
         from mlflow.models import ModelSignature
         from utils import load_ds, set_tracking_uri
-        from src.models.mlp.mlp import MLP, mlp_model
+        from src.models.mlp.mlp import mlp_model
         from src.models.mlp.config import MLPConfig
         from src.metrics import classification_metrics
         

@@ -15,7 +15,7 @@ variable "k8s" {
 
 variable "machine_type" {
   description = "Machine type for the instance"
-  default = "e2-highcpu-16"
+  default = "e2-highcpu-4"
 }
 
 variable "zone" {
